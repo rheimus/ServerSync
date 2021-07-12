@@ -4,7 +4,6 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.util.Logger;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -12,7 +11,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import java.awt.Desktop;
+
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,11 +57,10 @@ public class PaneUpdate extends GridPane {
         this.add(labelVersion2,1,1);
         this.add(labelUrl,0,2);
         this.add(hyperUpdatedUrl,1,2);
-
-        Platform.runLater(this::getLastReleases);
     }
 
     public void getLastReleases() {
+        Logger.log("Checking for updates");
         //String url = "https://github.com/superzanti/ServerSync/releases/latest";
 
         // Create a neat value object to hold the URL
@@ -93,7 +92,7 @@ public class PaneUpdate extends GridPane {
             String releaseVersion = release.get("update_url").toString();
             String urlRelease = "https://github.com" + releaseVersion.substring(1, releaseVersion.length() - 1);
             this.hyperUpdatedUrl.setText(urlRelease);
-            System.out.println(responseStrBuilder.toString());
+            Logger.debug(responseStrBuilder.toString());
             if(!this.curVersion.equals(lastVersion)){
                 Gui_JavaFX.getStackMainPane().getPaneSideBar().updateIconUpdate("notUpdate");
             }

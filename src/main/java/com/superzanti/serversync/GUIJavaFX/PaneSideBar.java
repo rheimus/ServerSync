@@ -1,5 +1,6 @@
 package com.superzanti.serversync.GUIJavaFX;
 
+import javafx.application.Platform;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
@@ -72,26 +73,30 @@ public class PaneSideBar extends VBox {
         btnUpdate.setOnAction(e -> {
             Gui_JavaFX.getStackMainPane().displayPanel(3);
             Gui_JavaFX.getStackMainPane().getPaneOptions().refreshConfigValues();
+            Platform.runLater(() -> {
+                Gui_JavaFX.getStackMainPane().getPaneUpdate().getLastReleases();
+            });
         });
 
         this.getStyleClass().add("sidebar-vbx");
         this.getChildren().addAll(btnSync, btnLogs, btnOptions, btnUpdate);
     }
 
-    public void updateIconUpdate(String icon){
+    public void updateIconUpdate(String icon) {
         SVGPath svgUpdate = new SVGPath();
         svgUpdate.getStyleClass().add("sidebar-icon");
         svgUpdate.setScaleX(0.9);
         svgUpdate.setScaleY(0.9);
 
-        switch (icon){
+        switch (icon) {
             case "notUpdate":
                 svgUpdate.setContent(svgPathNotUpdate);
                 break;
             case "offline":
                 svgUpdate.setContent(svgPathOffline);
                 break;
-            default: break;
+            default:
+                break;
         }
 
 

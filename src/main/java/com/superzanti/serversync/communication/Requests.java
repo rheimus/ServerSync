@@ -42,6 +42,8 @@ public class Requests {
         try {
             writeMessage(EServerMessage.GET_MANIFEST);
         } catch (IOException e) {
+            Logger.error("Failed to fetch manifest from server");
+            Logger.debug(e);
             return null;
         }
 

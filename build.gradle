@@ -1,23 +1,33 @@
 import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 plugins {
-    id 'edu.sc.seis.launch4j' version '2.4.6'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'edu.sc.seis.launch4j' version '2.5.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
     id 'eclipse'
     id 'maven-publish'
 }
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
 
+javafx {
+    version = "11"
+    modules = var_java_fx_modules.split(',')
+}
 
-group = "com.superzanti.serversync"
-version = ssversion
+group = var_group
+version = var_version
+
 
 configurations {
     shadow
@@ -31,15 +41,24 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 
     implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation var_dep_minimal_json
+    implementation var_dep_picocli
 
     annotationProcessor 'info.picocli:picocli-codegen:4.3.2'
 
-    shadow group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
-    shadow group: 'info.picocli', name: 'picocli', version: '4.3.2'
+    var_java_fx_modules.split(',').collect {
+        def modName = it.replace('.', '-')
+        shadow "org.openjfx:$modName:$javafx.version:win"
+        shadow "org.openjfx:$modName:$javafx.version:linux"
+        shadow "org.openjfx:$modName:$javafx.version:mac"
+    }
+
+    shadow var_dep_minimal_json
+    shadow var_dep_picocli
 }
 
 application {
-    mainClassName = 'com.superzanti.serversync.ServerSync'
+    mainClass.set var_main_class
 }
 
 test {
@@ -49,52 +68,56 @@ test {
     }
 }
 
-jar {
-    archivesBaseName = ssname
+shadowJar {
+    // Note: Don't minimize it breaks the javafx bundling
+    configurations = [project.configurations.shadow]
+    archivesBaseName = var_name
 
     processResources {
         exclude "css/application.css"
     }
 
     manifest {
-        attributes 'Main-Class': mainclass, 'Implementation-Version': ssversion
+        attributes 'Main-Class': var_main_class, 'Implementation-Version': var_version
     }
-}
-
-shadowJar {
-    configurations = [project.configurations.shadow]
-    archivesBaseName = ssname
-    minimize()
 
     dependencies {
         exclude 'forge*.jar'
     }
 }
 
+createAllExecutables {
+    dependsOn shadowJar
+}
+
 createExe {
     dependsOn shadowJar
     outfile = 'ServerSyncClient.exe'
+    mainClassName = var_main_class
     icon = "${projectDir}/src/main/resources/ServersyncLogo.ico"
     copyConfigurable = project.tasks.shadowJar.outputs.files
-    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    jarTask = project.tasks.shadowJar
+    downloadUrl = 'https://adoptopenjdk.net/'
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Client"
     fileDescription = "The client side for users."
-    version = ssversion
+    version = var_version
 }
 
 task createServerExe(type: Launch4jLibraryTask) {
     dependsOn shadowJar
+    dependsOn createExe
     outfile = 'ServerSyncServer.exe'
     headerType = 'console'
-    mainClassName = 'com.superzanti.serversync.ServerSyncServer'
+    mainClassName = var_main_class_server
     icon = "${projectDir}/src/main/resources/ServersyncLogoServer.ico"
     copyConfigurable = project.tasks.shadowJar.outputs.files
-    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    jarTask = project.tasks.shadowJar
+    downloadUrl = 'https://adoptopenjdk.net/'
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Server"
     fileDescription = "The server side for admins."
-    version = ssversion
+    version = var_version
 }
 
 publishing {
